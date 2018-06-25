@@ -20,7 +20,7 @@ describe('FileCache', () => {
   });
 
   it('should clear cache', () => {
-    const link = 'github:test/test1/test.txt';
+    const link = 'test/test1/test.txt';
     fileCache._cacheFile(link, 'hello');
     expect(fileCache._findFile(link) ? true : false).toEqual(true);
     fileCache.clearCache();
