@@ -30,7 +30,6 @@ class WebFileCache {
    * @private
    */
   _getCachedPath(link) {
-    link = link.replace(/^github\:/, 'github#'); // replace ':' for '#' in github protocol
     link = link.replace(/\:\/\//, '#'); // replace '://' for '#' in url
     link = link.replace(/\//g, '-'); // replace '/' for '-'
     const parts = link.match(/^([^\?]*)(\?(.*))?$/); // delete get parameters from url
@@ -130,7 +129,6 @@ class WebFileCache {
     let content = readFunction(includePath);
 
     if (needCache && this.useCache) {
-      console.log(`Caching file "${includePath}"`);
       this._cacheFile(includePath, content);
     }
     return content;
