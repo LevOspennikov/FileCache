@@ -11,7 +11,7 @@ const HASH_SEED = 0xE1EC791C;
 const MAX_FILENAME_LENGTH = 250;
 
 
-class FileCache {
+class WebFileCache {
 
   constructor(fileName = '') {
     this._useCache = true;
@@ -198,4 +198,4 @@ class FileCache {
   }
 }
 
-module.exports = FileCache;
+module.exports = WebFileCache;

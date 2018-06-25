@@ -1,22 +1,22 @@
 {
-  "name": "filecache",
+  "name": "webfilecache",
   "version": "1.0.0",
-  "description": "Filecache for external web fo\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[Local filecache for external web files",
+  "description": "Local filecache for external web files",
   "main": "index.js",
   "scripts": {
     "test": "node node_modules/jasmine/bin/jasmine.js"
   },
   "repository": {
     "type": "git",
-    "url": "github.com/LevOspennikov/Filecache"
+    "url": "github.com/LevOspennikov/FileCache"
   },
   "keywords": [
     "cache",
     "filecache",
     "local",
-    "cache"
+    "service"
   ],
-  "author": "Lev Ospennikov",
+  "author": "iamlev",
   "license": "MIT",
   "dependencies": {
     "fs-extra": "^6.0.1",
