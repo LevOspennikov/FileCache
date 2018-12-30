@@ -19,30 +19,29 @@ describe('FileCache', () => {
     }
   });
 
-  it('should cache file', () => {
+  it('should cache file', async () => {
     const link = 'file/files/cache';
-    fileCache.read((x) => '1', link);
+    await fileCache.read((x) => '1', link);
     expect(fileCache.findFile(link) ? true : false).toEqual(true);
-    expect(fileCache.read(x => '2', link)).toEqual('1');
+    expect(await fileCache.read(x => '2', link)).toEqual('1');
   });
 
-  it('should cache files with similar names', () => {
+  it('should cache files with similar names', async () => {
     const link = 'file/files/cache';
     const similarLink = 'file/files/cachee';
-    fileCache.read((x) => '1', link);
-    fileCache.read((x) => '2', similarLink);
+    await fileCache.read((x) => '1', link);
+    await fileCache.read((x) => '2', similarLink);
     expect(fileCache.findFile(link) ? true : false).toEqual(true);
-    expect(fileCache.read((x) => '2', link)).toEqual('1');
+    expect(await fileCache.read((x) => '2', link)).toEqual('1');
     expect(fileCache.findFile(similarLink) ? true : false).toEqual(true);
-    expect(fileCache.read((x) => '1', similarLink)).toEqual('2')
+    expect(await fileCache.read((x) => '1', similarLink)).toEqual('2');
   });
 
-  it('shouldn\'t cache file, when cache is off', () => {
+  it('shouldn\'t cache file, when cache is off', async () => {
     fileCache.useCache = false;
     const link = 'file/files/cache';
     fileCache.read((x) => '1', link);
     expect(fileCache.findFile(link) ? true : false).toEqual(false);
-    expect(fileCache.read((x) => '2', link)).toEqual('2');
+    expect(await fileCache.read((x) => '2', link)).toEqual('2');
   });
-
 });
