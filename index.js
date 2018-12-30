@@ -1,5 +1,3 @@
-'use strict';
-
 const fs = require('fs-extra');
 const path = require('path');
 const minimatch = require('minimatch');
@@ -12,13 +10,12 @@ const MAX_FILENAME_LENGTH = 250;
 
 
 class WebFileCache {
-
   constructor(fileName = '') {
-    this._useCache = true;
-    this._cacheDir = '.' + path.sep + '.cache';
-    this._excludeList = [];
-    this._outdateTime = CACHE_LIFETIME * 86400000; // precalc milliseconds in one day
-    this.excludeList = fileName;
+    this.useCache = true;
+    this.cacheDirPrivate = `.${path.sep}.cache`;
+    this.excludeListPrivate = [];
+    this.outdateTime = CACHE_LIFETIME * 86400000; // precalc milliseconds in one day
+    this.excludeListName = fileName;
   }
 
   /**
@@ -29,20 +26,20 @@ class WebFileCache {
    * @return {string} folder and name, where cache file can be found
    * @private
    */
-  _getCachedPath(link) {
-    link = link.replace(/\:\/\//, '#'); // replace '://' for '#' in url
-    link = link.replace(/\//g, '-'); // replace '/' for '-'
-    const parts = link.match(/^([^\?]*)(\?(.*))?$/); // delete get parameters from url
+  getCachedPath(link) {
+    let modifiedLink = link.replace(/:\/\//, '#'); // replace '://' for '#' in url
+    modifiedLink = modifiedLink.replace(/\//g, '-'); // replace '/' for '-'
+    const parts = modifiedLink.match(/^([^?]*)(\?(.*))?$/); // delete get parameters from url
     if (parts && parts[3]) {
-      link = parts[1] + XXHash.h64(parts[3], HASH_SEED);
+      modifiedLink = parts[1] + XXHash.h64(parts[3], HASH_SEED);
     }
-    if (link.length > MAX_FILENAME_LENGTH) {
-      const startPart = link.substr(0, 100);
-      const endPart = link.substr(link.length - 100);
-      const middlePart = XXHash.h64(link, HASH_SEED);
-      link = startPart + endPart + middlePart;
+    if (modifiedLink.length > MAX_FILENAME_LENGTH) {
+      const startPart = modifiedLink.substr(0, 100);
+      const endPart = modifiedLink.substr(modifiedLink.length - 100);
+      const middlePart = XXHash.h64(modifiedLink, HASH_SEED);
+      modifiedLink = startPart + endPart + middlePart;
     }
-    return path.join(this._cacheDir, link);
+    return path.join(this.cacheDir, modifiedLink);
   }
 
   /**
@@ -51,8 +48,8 @@ class WebFileCache {
    * @param {string} content content of the file
    * @private
    */
-  _cacheFile(filePath, content) {
-    const cachedPath = this._getCachedPath(filePath);
+  cacheFile(filePath, content) {
+    const cachedPath = this.getCachedPath(filePath);
     try {
       fs.ensureDirSync(path.dirname(cachedPath));
       fs.writeFileSync(cachedPath, content);
@@ -67,8 +64,8 @@ class WebFileCache {
    * @param {{dirPath : string, fileName : string} | false} link link to the file
    * @return {string|false} result
    */
-  _findFile(link) {
-    const finalPath = this._getCachedPath(link);
+  findFile(link) {
+    const finalPath = this.getCachedPath(link);
     return fs.existsSync(finalPath) ? finalPath : false;
   }
 
@@ -77,8 +74,8 @@ class WebFileCache {
    * @param {string} path to the file
    * @return {boolean} result
    */
-  _isExcludedFromCache(includedPath) {
-    return this._excludeList.some((regexp) => regexp.test(includedPath));
+  isExcludedFromCache(includedPath) {
+    return this.excludeListPrivate.some(regexp => regexp.test(includedPath));
   }
 
   /**
@@ -86,11 +83,11 @@ class WebFileCache {
    * @param {string} includePath to the file
    * @return {boolean} result
    */
-  _toBeCached(includePath) {
-    return this.useCache && !this._isExcludedFromCache(includePath);
+  toBeCached(includePath) {
+    return this.useCache && !this.isExcludedFromCache(includePath);
   }
 
-  _readCachedFile(includePath) {
+  readCachedFile(includePath) { // eslint-disable-line class-methods-use-this
     return fs.readFileSync(includePath, 'utf-8');
   }
 
@@ -99,9 +96,9 @@ class WebFileCache {
    * @param {string} path to the file
    * @return {boolean} result
    */
-  _isCacheFileOutdate(pathname) {
+  isCacheFileOutdate(pathname) {
     const stat = fs.statSync(pathname);
-    return Date.now() - stat.mtime > this._outdateTime;
+    return Date.now() - stat.mtime > this.outdateTime;
   }
 
   /**
@@ -113,23 +110,23 @@ class WebFileCache {
    */
   read(loadFunction, includePath) {
     let readFunction = loadFunction;
+    let includedPath = includePath;
     let needCache = false;
-    if (this._toBeCached(includePath)) {
-        let result;
-        if ((result = this._findFile(includePath)) && !this._isCacheFileOutdate(result)) {
-          // change reader to local reader
-          includePath = result;
-          // this.machine.logger.info(`Read source from local path "${includePath}"`);
-          readFunction = this._readCachedFile;
-        } else {
-          needCache = true;
-        }
+    if (this.toBeCached(includePath)) {
+      const result = this.findFile(includePath);
+      if (result && !this.isCacheFileOutdate(result)) {
+        // includedPath reader to local reader
+        includedPath = result;
+        readFunction = this.readCachedFile;
+      } else {
+        needCache = true;
+      }
     }
 
-    let content = readFunction(includePath);
+    const content = readFunction(includedPath);
 
     if (needCache && this.useCache) {
-      this._cacheFile(includePath, content);
+      this.cacheFile(includePath, content);
     }
     return content;
   }
@@ -138,61 +135,37 @@ class WebFileCache {
     fs.removeSync(this.cacheDir);
   }
 
-  /**
-   * Use cache?
-   * @return {boolean}
-   */
-  get useCache() {
-    return this._useCache || false;
-  }
-
-  /**
-   * @param {boolean} value
-   */
-  set useCache(value) {
-    this._useCache = value;
-  }
-
   set cacheDir(value) {
-    this._cacheDir = value.replace(/\//g, path.sep);
+    this.cacheDirPrivate = value.replace(/\//g, path.sep);
   }
 
   get cacheDir() {
-    return this._cacheDir;
-  }
-
-  get excludeList() {
-    return this._excludeList;
+    return this.cacheDirPrivate;
   }
 
   /**
    * Construct exclude regexp list from filename
    * @param {string} name of exclude file. '' for default
    */
-  set excludeList(fileName) {
-    if (fileName == '') {
-      fileName = DEFAULT_EXCLUDE_FILE_NAME;
-    }
-
+  set excludeList(fileName = DEFAULT_EXCLUDE_FILE_NAME) {
     const newPath = fileName;
     // check is fileName exist
     if (!fs.existsSync(newPath)) {
-      if (fileName == DEFAULT_EXCLUDE_FILE_NAME) {
+      if (fileName === DEFAULT_EXCLUDE_FILE_NAME) {
         // if it isn't exist and it is default, then put empty list
-        this._excludeList = [];
+        this.excludeListPrivate = [];
         return;
-      } else {
-        throw new Error(`${newPath} file does not exist`);
       }
+      throw new Error(`${newPath} file does not exist`);
     }
 
     const content = fs.readFileSync(newPath, 'utf8');
     const filenames = content.split(/\n|\r\n/);
     // filters not empty strings, and makes regular expression from template
-    const patterns = filenames.map((value) => value.trimLeft()) // trim for "is commented" check
-      .filter((value) => (value != '' && value[0] != '#'))
-      .map((value) => minimatch.makeRe(value));
-    this._excludeList = patterns;
+    const patterns = filenames.map(value => value.trimLeft()) // trim for "is commented" check
+      .filter(value => (value !== '' && value[0] !== '#'))
+      .map(value => minimatch.makeRe(value));
+    this.excludeListPrivate = patterns;
   }
 }
 

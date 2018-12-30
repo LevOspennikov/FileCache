@@ -10,7 +10,7 @@ describe('FileCache', () => {
 
   beforeEach(() => {
     fileCache = new FileCache();
-    fileCache._cacheDir = ".test-cache";
+    fileCache.cacheDir = '.test-cache';
   });
 
   afterEach(() => {
@@ -22,8 +22,8 @@ describe('FileCache', () => {
   it('should cache file', () => {
     const link = 'file/files/cache';
     fileCache.read((x) => '1', link);
-    expect(fileCache._findFile(link) ? true : false).toEqual(true);
-    expect(fileCache.read((x) => '2', link)).toEqual('1');
+    expect(fileCache.findFile(link) ? true : false).toEqual(true);
+    expect(fileCache.read(x => '2', link)).toEqual('1');
   });
 
   it('should cache files with similar names', () => {
@@ -31,9 +31,9 @@ describe('FileCache', () => {
     const similarLink = 'file/files/cachee';
     fileCache.read((x) => '1', link);
     fileCache.read((x) => '2', similarLink);
-    expect(fileCache._findFile(link) ? true : false).toEqual(true);
+    expect(fileCache.findFile(link) ? true : false).toEqual(true);
     expect(fileCache.read((x) => '2', link)).toEqual('1');
-    expect(fileCache._findFile(similarLink) ? true : false).toEqual(true);
+    expect(fileCache.findFile(similarLink) ? true : false).toEqual(true);
     expect(fileCache.read((x) => '1', similarLink)).toEqual('2')
   });
 
@@ -41,7 +41,7 @@ describe('FileCache', () => {
     fileCache.useCache = false;
     const link = 'file/files/cache';
     fileCache.read((x) => '1', link);
-    expect(fileCache._findFile(link) ? true : false).toEqual(false);
+    expect(fileCache.findFile(link) ? true : false).toEqual(false);
     expect(fileCache.read((x) => '2', link)).toEqual('2');
   });
 
