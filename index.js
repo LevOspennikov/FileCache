@@ -82,13 +82,14 @@ class WebFileCache {
    * Check, should file be cached
    * @param {string} includePath to the file
    * @return {boolean} result
+   * @private
    */
   toBeCached(includePath) {
     return this.useCache && !this.isExcludedFromCache(includePath);
   }
 
   readCachedFile(includePath) { // eslint-disable-line class-methods-use-this
-    return fs.readFileSync(includePath, 'utf-8');
+    return fs.readFile(includePath, 'utf-8');
   }
 
   /**
@@ -108,7 +109,7 @@ class WebFileCache {
    * @return {string} content of cached file
    * @private
    */
-  read(loadFunction, includePath) {
+  async read(loadFunction, includePath) {
     let readFunction = loadFunction;
     let includedPath = includePath;
     let needCache = false;
@@ -123,7 +124,7 @@ class WebFileCache {
       }
     }
 
-    const content = readFunction(includedPath);
+    const content = await readFunction(includedPath);
 
     if (needCache && this.useCache) {
       this.cacheFile(includePath, content);
